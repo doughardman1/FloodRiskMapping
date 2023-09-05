@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-#import osmnx as ox
+import osmnx as ox
 
 import rasterio as rio
 
@@ -18,12 +18,13 @@ import earthpy.plot as ep
 
 import geojson
 
-
+path = '/home/doug/git/FloodRiskMapping/LiDAR/LIDAR-DTM-2m-2022-SU32ne/SU32ne_DTM_2m.tif'
 # download LiDAR from Defra at https://environment.data.gov.uk/DefraDataDownload/?Mode=survey and read band 1 (elevation values)
-SU32ne_DTM_2m = rio.open('/home/doug/git/FloodRiskMapping/LiDAR/LIDAR-DTM-2m-2022-SU32ne/SU32ne_DTM_2m.tif').read(1)
-
+SU32ne_DTM_2m = rio.open(path).read(1)
+crs = rio.open(path).crs
 # implement joining LiDAR tiles together
 
+dem = rioxarray.open_rasterio(path)
 
 # get GeoJSON for box at https://boundingbox.klokantech.com/
 bounding_box = '''{"type": "Polygon", "coordinates":[[
@@ -38,12 +39,13 @@ cropping_geometry = [geojson.loads(bounding_box)]
     # need to check crs here
 
 
+fig, ax = plt.subplots()
+dem.squeeze().plot.imshow(ax=ax)
 
-# Plot your data using earthpy
-ep.plot_bands(SU32ne_DTM_2m,
-              title="2m Composite LiDAR Digital Elevation Model (DEM) \n River Test, Romsey, Hampshire",
-              cmap="Greys")
 
+river = ox.geocode_to_gdf('River Test', which_result=1)
+river = river.to_crs(crs)
+river.plot(ax=ax, color='blue')
 plt.show()
 
 
